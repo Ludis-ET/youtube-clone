@@ -2,7 +2,6 @@ import express from "express";
 import Ffmpeg from "fluent-ffmpeg";
 
 const app = express();
-const port = 3000;
 
 app.post("/process-video", (req, res) => {
   const inputFilePath = req.body.inputFilePath;
@@ -11,8 +10,21 @@ app.post("/process-video", (req, res) => {
   if (!inputFilePath || !outputFilePath) {
     res.status(400).send("Bad request: Missing file path. ");
   }
+
+  Ffmpeg(inputFilePath)
+    .outputOption("-vf", "scale=-1:720")
+    .on("end", () => {
+      return res.status(200).send("Processing finished successfully.");
+    })
+    .on("error", (error) => {
+      console.log(error.message);
+      res.status(500).send(`Internal Server Error: ${error.message}`);
+    })
+    .save(outputFilePath);
 });
 
+
+const port = process.env.PORT || 3000;
 app.listen(port, () => {
   console.log("serving");
 });
